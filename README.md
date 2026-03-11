@@ -1,4 +1,4 @@
-![Topology Diagram]()
+![Topology Diagram](https://github.com/furkangurses/Linux-DevOps-Learning/blob/main/resim.jpg?raw=true)
 
 # Linux Learning Notes
 
