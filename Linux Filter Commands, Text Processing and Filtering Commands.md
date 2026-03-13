@@ -95,7 +95,7 @@ find /etc -type d | head
 
 ```
 
-#🧠 Technical Explanation
+## 🧠 Technical Explanation
 grep
 - searches text inside files using patterns
 - prints lines that match the specified pattern
@@ -142,7 +142,7 @@ find
 
 --
 
-#🌍 Real-World DevOps Use Case
+## 🌍 Real-World DevOps Use Case
 - grep -r "error" /var/log --include="*.log"
 
 - tail -f /var/log/syslog | grep error
@@ -155,7 +155,7 @@ find
 
 --
 
-#🛠️ Skills Learned
+## 🛠️ Skills Learned
 
 - Searching text patterns in files
 - Filtering command output using pipes
@@ -166,7 +166,7 @@ find
 
 --
 
-#📂 Example Scenario
+## 📂 Example Scenario
 
 - A DevOps engineer needs to investigate errors occurring in a production environment.
 
@@ -180,7 +180,7 @@ find
 
 --
 
-#⚡ Possible Improvements
+## ⚡ Possible Improvements
 
 - Combine grep with awk for advanced filtering
 - Use sed for text transformation
@@ -190,7 +190,7 @@ find
 
 --
 
-#🧩 Troubleshooting Notes
+## 🧩 Troubleshooting Notes
 
 - problem:
 grep returns unexpected matches
@@ -318,7 +318,7 @@ cat employees.txt | tee output.txt
 
 ---
 
-#🧠 Technical Explanation
+## 🧠 Technical Explanation
 
 - SORT reads input lines and arranges them in a specific order. By default it performs alphabetical sorting based on ASCII values. Options allow case-insensitive sorting, numeric sorting, month-based sorting, and sorting based on specific fields.
 
@@ -338,7 +338,7 @@ cat employees.txt | tee output.txt
 
 ---
 
-#🌍 Real-World DevOps Use Case
+## 🌍 Real-World DevOps Use Case
 
 DevOps engineers frequently manipulate structured text such as logs, metrics, and CSV exports.
 
@@ -365,7 +365,7 @@ This improves readability when reviewing structured deployment data in the termi
 
 ---
 
-#📂 Example Scenario
+## 📂 Example Scenario
 
 A DevOps engineer analyzes a CSV file containing deployment information.
 
@@ -378,7 +378,7 @@ These commands help extract specific fields, sort deployments by attributes, and
 
 ---
 
-#⚡ Possible Improvements
+## ⚡ Possible Improvements
 
 - Combine these commands with grep for advanced filtering
 - Use awk for more complex text processing
@@ -388,7 +388,7 @@ These commands help extract specific fields, sort deployments by attributes, and
 
 ---
 
-#🧩 Troubleshooting Notes
+## 🧩 Troubleshooting Notes
 
 - sort numbers incorrectly
 - sort -n numbers.txt
