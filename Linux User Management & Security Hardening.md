@@ -121,6 +121,26 @@ A DevOps engineer writes a script that:
 
 ---
 
-## 🛠️ Tools & Technologies
+## LINUX GROUP MANAGEMENT (QUICK REF)
 
-`Linux` `Ubuntu` `Bash` `Security` `IAM` `User-Management`
+
+### --- Grup Oluşturma ve İnceleme ---
+sudo addgroup devteam          # 'devteam' adında yeni grup oluştur
+cat /etc/group | grep devteam  # Grubun varlığını ve üyelerini kontrol et
+getent group devteam           # Grup detaylarını (GID vb.) görüntüle
+
+### --- Kullanıcıyı Gruba Ekleme (KRİTİK) ---
+sudo usermod -aG devteam ubuntu # 'ubuntu' kullanıcısını devteam grubuna GÜVENLE ekle
+# NOT: -a flag'ini unutma! Unutursan kullanıcı diğer tüm gruplardan atılır.
+
+### --- Üyelik Doğrulama ---
+groups ubuntu                  # Kullanıcının dahil olduğu tüm grupları listele
+id ubuntu                      # UID ve tüm GID bilgilerini detaylı gör
+
+### --- Grup Düzenleme ve Silme ---
+sudo groupmod -n developers devteam # Grubu 'developers' olarak yeniden adlandır
+sudo gpasswd -d ubuntu developers   # 'ubuntu' kullanıcısını gruptan çıkar
+sudo delgroup developers            # Grubu sistemden tamamen sil
+
+### --- Değişiklikleri Aktif Etme ---
+newgrp developers              # Oturumu kapatmadan yeni grup yetkilerini yükle
