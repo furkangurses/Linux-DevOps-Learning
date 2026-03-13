@@ -106,7 +106,7 @@ less demo.txt
 
 ```
 
-#🧠 Technical Explanation
+## 🧠 Technical Explanation
 cat
 - reads file contents and prints them to standard output
 - can concatenate multiple files into one output stream
@@ -142,7 +142,7 @@ less
 
 --
 
-#🌍 Real-World DevOps Use Case
+## 🌍 Real-World DevOps Use Case
 - tail -n 20 /var/log/app.log
 - tail -f /var/log/app.log
 - head config.yml
@@ -150,28 +150,28 @@ less
 DevOps engineers frequently monitor logs during deployments and troubleshooting.
 Using tail -f, engineers can observe log output in real time and quickly identify errors or service failures.
 
-#🛠️ Skills Learned
+## 🛠️ Skills Learned
 - viewing file contents directly from the terminal
 - combining multiple files using command line tools
 - inspecting large files efficiently
 - monitoring logs in real time
 - understanding common Linux file inspection utilities
 
-#📂 Example Scenario
+## 📂 Example Scenario
 - tail -n 50 /var/log/app.log
 - tail -f /var/log/app.log
 - head config.yml
 
 During a production deployment, engineers monitor application logs to ensure that services start correctly and no runtime errors occur.
 
-#⚡ Possible Improvements
+## ⚡ Possible Improvements
 - combine commands with pipes
 - search inside files using grep
 - analyze logs using awk or sed
 - automate monitoring with shell scripts
 - integrate log inspection into CI/CD pipelines
 
-#🧩 Troubleshooting Notes
+## 🧩 Troubleshooting Notes
 -problem
 - large file cannot be opened in editor
 
