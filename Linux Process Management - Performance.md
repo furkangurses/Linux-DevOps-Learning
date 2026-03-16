@@ -108,7 +108,7 @@ In an Enterprise setting, manually SSHing into a server to run `renice` is an "A
 * **Privilege Escalation (Least Privilege):** In the Linux security model, decreasing a NICE value (increasing CPU priority) is restricted to **root (sudo)** users. Standard users can only increase their NICE value (lower their own priority). This prevents a user from hijacking CPU cycles from system-critical services.
 * **Malware Detection:** Processes requesting maximum priority (-20) while consistently consuming `%us` (User Time) are often indicators of unauthorized activity, such as Cryptojacking. Such anomalies should trigger immediate alerts to the SOC.
 
-## ⌨️ Command Reference (Cheat Sheet)
+## ⌨️ Command Reference
 ```bash
 # --- 1. SYSTEM MONITORING & BOTTLENECK DETECTION ---
 top                             # Real-time system status (Press 'q' to exit)
