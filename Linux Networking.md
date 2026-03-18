@@ -250,3 +250,56 @@ cat /proc/net/bonding/bond0
 - Interface Drops: `node_network_receive_drop_total` (Prometheus) helps identify if a slave NIC in a bond is failing.
 - Bond State: Monitoring the `/proc/net/bonding/bond0` file for `MII Status: down` on any slave.
 - Packet Retransmissions: High TCP retransmissions on a specific bound IP suggest a configuration mismatch at the switch level (MTU or Duplex issues).
+
+---
+
+
+# 🌐 Essential Linux Networking Commands
+
+This repository contains a comprehensive guide to fundamental networking commands in Linux, following the core concepts of IP addressing and subnetting. These tools are vital for network administration, troubleshooting, and security management.
+
+## 📌 Core Logic
+The primary goal of these commands is to verify connectivity, trace data packet paths, and manage how a system communicates with the outside world (DNS, Firewalls, etc.). Most of these tools rely on **ICMP** (for error reporting) and **DNS** (for name resolution).
+
+---
+
+## 🛠 Command Summary Table
+
+| Command | Description | Example Usage |
+| :--- | :--- | :--- |
+| **`ping`** | Tests connectivity by sending ICMP echo requests to a host. | `ping google.com` |
+| **`ip addr`** | Displays or configures network interfaces and IP addresses. | `ip addr show` |
+| **`iptables`** | Manages, configures, and inspects IPv4 packet filter rules (Firewall). | `sudo iptables -L` |
+| **`traceroute`** | Traces the path packets take to reach a destination (shows hops). | `traceroute google.com` |
+| **`dig`** | Queries DNS name servers for IP addresses and record details. | `dig think.com` |
+| **`nslookup`** | A network tool used to query DNS for domain/IP information. | `nslookup google.com` |
+| **`hostnamectl`** | Manages and queries the system hostname and related settings. | `hostnamectl status` |
+
+---
+
+## 🔍 Detailed Command Analysis
+
+### 1. Ping & ICMP
+**ICMP (Internet Control Message Protocol)** is a set of rules used by network devices to communicate data transmission errors.
+* **Usage:** Use `ping` to verify if a server (like Google) is reachable. It is a required part of every IP implementation.
+
+### 2. IP Configuration (`ip`)
+The `ip` command is the modern standard for network interface management in Linux.
+* **`ip addr show`**: Lists all assigned IP addresses and interface statuses (Up/Down).
+
+### 3. Firewall Management (`iptables`)
+This tool acts as a "traffic controller," managing incoming, outgoing, and forwarded network traffic based on predefined security rules.
+* **`iptables -L`**: Used to list current firewall rules to see what traffic is allowed or blocked.
+
+### 4. Route Analysis (`traceroute`)
+When you run `traceroute`, it shows every "hop" (router) a packet takes from your system to the target server.
+* **Benefit:** Helps analyze network latency and find exactly where a connection is failing.
+
+### 5. DNS Lookups (`dig` & `nslookup`)
+These tools translate human-readable domain names (e.g., `think.com`) into machine-readable IP addresses.
+* **`dig`**: Preferred by admins for its detailed output.
+* **`nslookup`**: Great for quick queries regarding mail servers and basic DNS records.
+
+### 6. Hostname Management
+* **`hostname`**: Returns the current system name.
+* **`hostnamectl set-hostname <new-name>`**: Updates the system name permanently.
