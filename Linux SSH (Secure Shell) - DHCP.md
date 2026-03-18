@@ -76,3 +76,72 @@ sudo systemctl restart ssh
 
 ---
 
+# 📂 Linux Networking: DHCP, Netplan & Dynamic IP Provisioning
+
+## 🎯 Problem Statement & Business Value
+In modern cloud and e-commerce environments, server lifecycles are measured in seconds (ephemeral instances). If IP addressing and network configuration (DHCP) are not handled correctly and automatically, Auto-Scaling mechanisms fail, horizontal growth halts, and critical service downtime occurs due to IP conflicts.
+
+**Engineering Goal:** To ensure that infrastructure is integrated into the network in a secure, error-free, and automated manner (High-Availability & Scalability) based on the principle of "Zero-Touch Provisioning" without human intervention.
+
+## 🏗️ Architectural Overview & Deep-Dive
+DHCP (Dynamic Host Configuration Protocol) operates on a 4-stage architecture called DORA (Discover, Offer, Request, Acknowledge). In Ubuntu 24.04 and modern Linux systems, network configuration is managed through declarative YAML files via **Netplan**, an abstraction layer. In the background, operations are carried out by **systemd-networkd** or **NetworkManager**. The `dhclient` tool is used for manual intervention in lease processes.
+
+
+
+| Component / Concept | Task & Function | Enterprise Equivalent |
+| :--- | :--- | :--- |
+| `Netplan` | Reads network settings (YAML) and passes them to backend services. | Infrastructure as Code (IaC) integration point. |
+| `systemd-networkd` | Manages network interfaces and DHCP requests at the kernel level. | Modern Linux network background service (Backend). |
+| `dhclient` | Handles lease operations by communicating with the DHCP server. | Emergency intervention and manual debugging tool. |
+| `Lease Time` | The duration an IP address is allocated to a client (Valid/Preferred Lifetime). | Should be kept short for ephemeral containers. |
+
+## 🛠️ Implementation Workflow (The DevOps Way)
+1. **Status Analysis (Pre-check):** First, interface status and current IP/MAC configurations are analyzed with the `ip a` command. Identifying the target interface (e.g., `enx0` or `eth0`) is critical for automation standardization.
+2. **Declarative Configuration (Execution):** The `dhcp4: true` or static directives are defined for the target interface in the YAML file under `/etc/netplan/`. This step ensures the configuration is persistent and consistent.
+3. **Applying Changes:** Changes are pushed directly to the kernel and background services via `netplan apply`. Configurations can be tested with `netplan try` to minimize service disruption.
+4. **Lease and Metric Validation (Verification):** It is verified that the IP is assigned correctly and the lease duration (`valid_lft`) is valid by using the `ip a show <interface>` command and reading the `/var/lib/dhcp/dhclient.leases` file.
+
+## 🤖 Automation Perspective
+In Enterprise environments, Netplan files are never touched manually.
+* **Cloud (AWS/GCP/Azure):** During installation, the `cloud-init` tool automatically creates Netplan configurations using metadata received from the cloud provider.
+* **On-Premise / Bare Metal:** Standardized Netplan YAML files are pushed to thousands of servers using **Ansible** with the `ansible.builtin.template` module, adhering to the rule of idempotency.
+
+## 🛡️ Security Hardening & Compliance
+* **Configuration Security (File Permissions):** Files in the `/etc/netplan/` directory must have `chmod 600` permissions and `root:root` ownership to prevent unauthorized network changes (CIS Benchmark).
+* **DHCP Snooping & Spoofing Protection:** At the network level, DHCP Snooping must be enabled at the switch and hypervisor level to prevent unauthorized (Rogue) DHCP servers from distributing fake IPs and Gateways to monitor traffic (Man-in-the-Middle).
+
+## ⌨️ Commands
+```bash
+# 1. Check current network interfaces and assigned IP addresses
+ip a
+
+# 2. Go to Netplan configuration directory and list files
+cd /etc/netplan/ && ls -l
+
+# 3. Examine DHCP lease details and lifetime (valid_lft/preferred_lft) for the relevant interface
+ip a show enx0
+
+# 4. Read detailed lease logs and DNS/Router parameters held in the background
+cat /var/lib/dhcp/dhclient.leases
+
+# 5. Install dhclient, the manual intervention tool, if missing (Debian/Ubuntu)
+sudo apt update && sudo apt install isc-dhcp-client -y
+
+# 6. Manually request a new IP from the DHCP server for a specific interface (Usually fails in AWS/Cloud due to policy)
+sudo dhclient enx0
+```
+
+## 🧩 Edge Cases & Troubleshooting
+### Edge Case 1: "IP is already assigned" Error in Cloud Provider Environments (e.g., AWS EC2)
+- Error: When `sudo dhclient` is run, AWS VPC policies prevent IP changes. AWS locks IPs to the MAC address at the ENI (Elastic Network Interface) level.
+- Senior Fix: Stop manual dhclient operations. In AWS environments, IP changes should be done by assigning a new secondary IP to the ENI via the AWS Console/CLI or by re-triggering the cloud-init service, not from within the OS.
+
+### Edge Case 2: New Servers Failing to Get an IP (DHCP Pool Exhaustion)
+- Error: The server appears connected to the network but only receives an APIPA (`169.254.x.x`) address. `DHCP NAK` messages are seen in `/var/log/syslog`.
+- Senior Fix: The problem is in the infrastructure, not the server. Ephemeral devices have locked the IPs and exhausted the pool. As a solution, the "Lease Time" on the DHCP server should be lowered (e.g., from 8 days to 1 hour) or the Subnet (CIDR) should be expanded.
+
+## 📊 Metrics & Monitoring
+### The following metrics should be collected for the health of network and DHCP services:
+- Node Exporter: `node_network_receive_drop_total` and `node_network_transmit_errs_total` metrics are exported to Prometheus to monitor interface errors and packet drops.
+- Systemd Metrics: State metrics are collected via D-Bus or systemd exporter to monitor `systemd-networkd` service crashes or restarts.
+- Log Alerts (SIEM/Grafana Loki): An alert is generated via Slack/PagerDuty for the network team when keywords like `DHCPDECLINE` or `DHCPNAK` in `/var/log/syslog` exceed a certain threshold (e.g., 10 times in 5 minutes).
