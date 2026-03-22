@@ -81,7 +81,7 @@ atq
 ```
 ---
 
-## 🧩 Edge Cases & Troubleshooting (Senior Reflexes)
+## 🧩 Edge Cases & Troubleshooting
 ### Edge Case 1: The "Vanishing Path" (Environment Variable Mismatch)
 - Problem: Cron runs with a very minimal `PATH` (usually just `/usr/bin:/bin`). If your script calls custom binaries (e.g., `aws`, `docker`), it will fail with "command not found" even if it works manually in your terminal.
 - Senior Fix: Always define the full `PATH` at the top of the script or use absolute paths for every command. Add `set -x` for debugging to capture exactly what the shell sees.
@@ -153,7 +153,7 @@ cat /var/log/auth.log | grep "Failed password"
 sudo logrotate -d /etc/logrotate.d/local0
 ```
 
-## 🧩 Edge Cases & Troubleshooting (Senior Reflexes)
+## 🧩 Edge Cases & Troubleshooting
 
 1. **Edge Case 1: Application Stops Logging After Rotation (File Descriptor Hang)**
    - *Problem:* When Logrotate renames a file (`app.log` to `app.log.1`) and creates a new one, a running application (e.g., Nginx) keeps the old inode open. Logs are not written to the new file, and disk space isn't reclaimed.
