@@ -95,3 +95,75 @@ atq
 ## 📊 Metrics & Monitoring
 - Observability: Integrate with Prometheus Node Exporter using the `textfile_collector`. The script should output its success status to a `.prom` file.
 - Alerting Logic: Set up a Grafana alert: `time() - log_cleanup_last_run_seconds > 86400`. If the cleanup hasn't run successfully in over 24 hours, trigger a PagerDuty alert for the DevOps team.
+
+---
+
+# 📂 Linux Observability: Advanced Logging, Auditing & Log Rotation
+
+## 🎯 Problem Statement & Business Value
+- **Business Impact:** In high-traffic e-commerce and MSP environments, logging is not just a "text file" task. Improperly configured logging mechanisms lead to two major risks: **Disk Exhaustion** (uncontrolled log growth filling the disk to 100%, crashing databases and applications) and **Security Breaches** (failure to monitor authentication logs, leaving cyber-attacks unnoticed).
+- **Engineering Goal:** To establish a centralized, standardized, and automated **Log Lifecycle Management** for system logs, security metrics, and application outputs, ensuring **High Availability (HA)** and **Continuous Compliance**.
+
+## 🏗️ Architectural Overview & Deep-Dive
+Ubuntu and modern Linux distributions utilize a dual-layer logging architecture. Data from the kernel and services are processed via the modern `systemd-journald` (binary-based) and the traditional `rsyslog` (text-based) daemons.
+
+Below is an enterprise-grade comparison of these architectural components:
+
+| Component / Concept | Path / Service | Architecture (Under the Hood) | Enterprise Use Case |
+| :--- | :--- | :--- | :--- |
+| **rsyslog** | `/var/log/syslog`, `/etc/rsyslog.d/` | Traditional text-based log daemon. Routes data based on Facility (source) and Priority (severity). | Forwarding logs over UDP/TCP to a central Log Aggregator (SIEM). |
+| **journald** | `systemd-journald` service | Stores metadata-rich logs in binary format. Fast indexing and retrieval. | Real-time debugging of microservices or crashed units via `journalctl`. |
+| **Logrotate** | `/etc/logrotate.conf`, `/etc/logrotate.d/` | A cron-based tool for archiving, compressing, and purging old logs. | Managing retention policies (e.g., compress logs to `.gz` and delete after 30 days). |
+| **Auth Logs** | `/var/log/auth.log`, `wtmp` | Records all authentication events (SSH, sudo) via PAM (Pluggable Authentication Modules). | Monitoring for Brute-Force attacks and fulfilling SOC2 audit requirements. |
+
+## 🛠️ Implementation Workflow (The DevOps Way)
+1. **Defining Log Routing Rules (Cause):** To prevent application logs from getting lost in the generic `syslog`, we write custom rules under `/etc/rsyslog.d/` (e.g., `local0.conf`). *(Effect)*: This isolation standardizes service logs and decouples them from system-level noise.
+2. **Daemon Reloading (Cause):** After modifying configuration files, we run `systemctl restart rsyslog`. *(Effect)*: This flushes the daemon's memory and forces it to start writing to the new I/O targets (the new log files).
+3. **Logrotate Configuration (Cause):** To prevent these isolated log files from consuming all disk space, we add rotation, compression (`compress`), and delay policies (`delaycompress`) to `/etc/logrotate.d/`. *(Effect)*: This transforms the system into a "Zero-Touch" self-cleaning infrastructure.
+4. **Synthetic Log Injection & Testing (Cause):** We use `logger -p local0.info -t DEPLOY_TEST "Deployment started"`. *(Effect)*: This verifies that the routing and rotation mechanisms are working correctly before deploying to production.
+
+## 🤖 Automation Perspective
+In an enterprise environment, manually SSHing into servers to configure `rsyslog` or `logrotate` is unacceptable as it creates **Configuration Drift**. This process is automated using **Ansible** or **Terraform**.
+
+* **The Ansible Approach:** The `template` module is used to push organization-specific logrotate rules from Jinja2 templates to target nodes.
+* **Automation Logic:** The configuration is copied to `/etc/logrotate.d/`, and then the `ansible.builtin.systemd` module reloads the `rsyslog` service. This ensures thousands of nodes maintain the same logging policy in seconds.
+
+## 🛡️ Security Hardening & Compliance
+- **SOC2 & CIS Benchmarks:** Corporate security policies require real-time monitoring of `/var/log/auth.log` for successful/failed logins (`failed password`, `session opened for user root`). File permissions must be hardened (only `root` and `adm` groups should have read access).
+- **Immutable Log Forwarding:** In modern security architectures, logs are not kept solely on the local disk. To prevent an attacker from "covering their tracks" by deleting logs, `rsyslog` is configured to forward logs instantly to a remote SIEM (Splunk, ELK) using TLS encryption (`*.* @@log-server.enterprise.com:514`).
+
+## ⌨️ Commands
+```bash
+# Check service health (Pre-flight check)
+sudo systemctl status rsyslog
+
+# Inject a manual log with tags and priority for script debugging
+logger -p user.warning -t "DEPLOY_PIPELINE" "CPU threshold warning"
+
+# Real-time monitoring of a specific service's logs for the last hour
+journalctl -u ssh --since "1 hour ago" -f
+
+# List system errors with detailed explanations (-x) jumping to the end (-e)
+journalctl -xe
+
+# Filter PAM (Authentication) logs for failed SSH attempts
+cat /var/log/auth.log | grep "Failed password"
+
+# Test a logrotate configuration in debug mode (-d) without making changes
+sudo logrotate -d /etc/logrotate.d/local0
+```
+
+## 🧩 Edge Cases & Troubleshooting (Senior Reflexes)
+
+1. **Edge Case 1: Application Stops Logging After Rotation (File Descriptor Hang)**
+   - *Problem:* When Logrotate renames a file (`app.log` to `app.log.1`) and creates a new one, a running application (e.g., Nginx) keeps the old inode open. Logs are not written to the new file, and disk space isn't reclaimed.
+   - *Senior Fix:* Add a `postrotate` block to the Logrotate config to send a **SIGHUP** signal or reload the application (e.g., `postrotate /bin/systemctl reload nginx endscript`).
+
+2. **Edge Case 2: `/var/log/journal` Consuming Entire Disk Volume**
+   - *Problem:* `systemd-journald` can grow exponentially if left unconfigured. Juniors often run `rm -rf /var/log/journal/*`, which can corrupt the journal service.
+   - *Senior Fix:* Never delete binary logs with `rm`. Use `journalctl --vacuum-time=7d` or `journalctl --vacuum-size=1G`. For a permanent fix, set `SystemMaxUse=1G` in `/etc/systemd/journald.conf` and restart the service.
+
+## 📊 Metrics & Monitoring
+- **Prometheus Node Exporter:** Monitor `/var/log` partition space using `node_filesystem_free_bytes`. Trigger alerts when disk usage exceeds 80%.
+- **Log Scraping:** Use `Promtail` or `Filebeat` to ingest `/var/log/auth.log` into a Grafana Loki or ELK stack.
+- **Alerting Logic:** "If more than 10 'Failed password' attempts originate from the same IP within 5 minutes, send a P1 Alert to the #secops Slack channel."
